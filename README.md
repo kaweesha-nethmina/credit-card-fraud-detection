@@ -1,128 +1,88 @@
-# Credit Card Fraud Detection using Random Forest
+
+# Credit Card Fraud Detection
 
 ## Overview
-This project implements an improved Random Forest model for detecting credit card fraud. The model addresses the challenges of imbalanced datasets and aims to maximize fraud detection accuracy while minimizing false positives.
+This project aims to detect fraudulent credit card transactions using machine learning. We implemented and compared four different algorithms: Decision Tree, Logistic Regression, Random Forest, and XGBoost. The goal is to identify the most effective model for fraud detection based on performance metrics.
 
 ## Dataset
-- **Source**: ULB Machine Learning Group - Credit Card Fraud Detection
-- **Link**: https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
-- **Description**: The dataset contains credit card transactions made in September 2013 by European cardholders. It includes 284,807 transactions, of which 492 are fraudulent (0.172% fraud rate).
-- **Features**:
-  - `Time`: Seconds elapsed between each transaction and the first transaction
-  - `V1` to `V28`: Principal components obtained via PCA (anonymized features)
-  - `Amount`: Transaction amount
-  - `Class`: Target variable (0 = legitimate, 1 = fraudulent)
-- **File**: `creditcard.csv`
+- **Source:** [Kaggle Credit Card Fraud Detection Dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+- **Description:** The dataset contains transactions made by European cardholders in September 2013. It presents transactions that occurred in two days, with 492 frauds out of 284,807 transactions. The dataset is highly unbalanced, with the positive class (frauds) accounting for 0.172% of all transactions.
+- **Features:** 30 features (V1-V28 are PCA components, plus 'Time', 'Amount', and 'Class' where 'Class' is the target variable: 1 for fraud, 0 for non-fraud).
 
-## Model Description
-### Algorithm: Random Forest Classifier
-### Learning Type: Supervised Learning (Binary Classification)
-Random Forest is an ensemble learning method that constructs multiple decision trees and merges their results. It's effective for fraud detection due to its ability to handle non-linear relationships and provide feature importance.
+## Models Implemented
+1. **Decision Tree**  
+  Implemented in `Decision_Tree_Fraud_Detection.ipynb`  
+  Simple, interpretable model for classification tasks.
 
-### Key Improvements Implemented
-1. **Feature Engineering**: Added interaction terms, polynomial features, binary flags, and temporal features (e.g., hour of day, log-transformed amount).
-2. **Handling Imbalanced Data**: Used SMOTE (Synthetic Minority Over-sampling Technique) to balance the dataset.
-3. **Hyperparameter Tuning**: Performed randomized search over key parameters (n_estimators, max_depth, etc.).
-4. **Optimal Threshold Selection**: Used Precision-Recall curve to find the best decision threshold for maximizing F1-score.
-5. **Feature Selection**: Applied SelectFromModel to reduce dimensionality.
-6. **Cross-Validation**: Ensured no data leakage by applying SMOTE within each CV fold.
-7. **Temporal Validation**: Checked for concept drift by evaluating on time-ordered splits.
+2. **Logistic Regression**  
+  Implemented in `logistic_regression.ipynb`  
+  A linear model suitable for binary classification.
 
-### Model Parameters (Best Configuration)
-- n_estimators: 200
-- max_depth: 20
-- min_samples_split: 5
-- min_samples_leaf: 2
-- max_features: 'sqrt'
-- class_weight: 'balanced'
-- criterion: 'gini'
+3. **Random Forest**  
+  Implemented in `random forest.ipynb`  
+  An ensemble of decision trees to improve accuracy and control overfitting.
 
-## Results and Outputs
+4. **XGBoost**  
+  Implemented in `xgboost_only.ipynb`  
+  A powerful gradient boosting algorithm known for high performance on tabular data.
 
-### Performance Metrics
-| Metric | Baseline | Improved Model |
-|--------|----------|----------------|
-| ROC-AUC | 0.9794 | 0.9832 |
-| Average Precision (AP) | 0.8782 | 0.8921 |
-| F1-Score | 0.8466 | 0.8715 |
-| Recall | 81.6% | 85.2% |
+## Model Comparison
+- The models were evaluated using metrics such as Accuracy, Precision, Recall, F1-Score, and ROC-AUC.
+- Due to the imbalanced nature of the dataset, special attention was given to Recall and ROC-AUC to ensure effective fraud detection.
+- Results and comparison plots are available in `model_comparison.ipynb`.
 
-### Confusion Matrix (Optimal Threshold ≈ 0.82)
-```
-Predicted: Legitimate | Fraud
-Actual:
-Legitimate | 56850 | 14
-Fraud      | 37    | 61
-```
+### Results Summary
+| Model              | Accuracy | Precision | Recall | F1-Score | ROC-AUC | Avg Precision |
+|--------------------|----------|-----------|--------|----------|---------|---------------|
+| Decision Tree      | 0.9694   | 0.0474    | 0.8776 | 0.0899   | 0.9166  | 0.4498        |
+| Logistic Regression| 0.9441   | 0.0276    | 0.9184 | 0.0535   | 0.9709  | 0.7226        |
+| Random Forest      | 0.9986   | 0.5621    | 0.8776 | 0.6853   | 0.9676  | 0.8757        |
+| XGBoost            | 0.9972   | 0.3668    | 0.8571 | 0.5138   | 0.9783  | 0.8467        |
 
-### Outputs Generated
-- Confusion Matrix plot
-- ROC Curve
-- Precision-Recall Curve
-- Feature Importance plot (top 20 features)
-- Threshold tuning visualization
+**Best Model:** Random Forest with F1-Score of 0.6853
 
-## Problems Faced and Solutions
+*Note: The comparison notebook now uses the same preprocessing, parameters, and thresholds as the individual model notebooks to ensure consistent results.*
 
-### 1. Imbalanced Dataset
-**Problem**: Only 0.172% of transactions are fraudulent, leading to poor model performance on minority class.
-**Solution**: Applied SMOTE to oversample minority class during training.
+## Model Improvements
+After initial evaluation, we implemented the following optimizations:
 
-### 2. Data Leakage in Cross-Validation
-**Problem**: Applying SMOTE before CV splits can cause data leakage.
-**Solution**: Used imblearn.Pipeline to apply SMOTE within each CV fold.
+1. **XGBoost Hyperparameter Tuning**
+   - Used RandomizedSearchCV to optimize parameters
+   - Best parameters: max_depth=6, n_estimators=300, learning_rate=0.2, colsample_bytree=0.9
+   - F1-Score improved from 0.7089 to 0.7713 (+8.8%)
 
-### 3. Suboptimal Decision Threshold
-**Problem**: Default 0.5 threshold doesn't optimize for fraud detection metrics.
-**Solution**: Performed threshold tuning using Precision-Recall curve to maximize F1-score.
+2. **Logistic Regression Threshold Optimization**
+   - Optimized decision threshold from 0.5 to 0.85
+   - F1-Score improved from 0.1088 to 0.2812 (+158.5%)
+   - Significantly better precision while maintaining high recall
 
-### 4. High Dimensionality
-**Problem**: 31 features after engineering, potential overfitting.
-**Solution**: Applied feature selection using SelectFromModel with median threshold.
+## How to Run
+1. Clone this repository.
+2. Install required Python packages (see below).
+3. Open the notebooks in Jupyter or VS Code and run the cells in order.
 
-### 5. Concept Drift
-**Problem**: Model performance might degrade over time due to changing fraud patterns.
-**Solution**: Implemented temporal validation to check model stability across time periods.
-
-### 6. Computational Complexity
-**Problem**: Training large Random Forest models is time-intensive.
-**Solution**: Used parallel processing (n_jobs=-1) and optimized hyperparameters for speed.
-
-## Files in Repository
-- `random forest.ipynb`: Jupyter notebook containing the complete implementation
-- `creditcard.csv`: Dataset file
-- `fraud_random_forest.pkl`: Trained model (pickle file)
-- `scaler.pkl`: Feature scaler for Amount and Time
-- `rf_evaluation.png`: Evaluation plots
-- `rf_threshold_tuning.png`: Threshold tuning plots
-
-## Usage
-1. Load the dataset: `df = pd.read_csv('creditcard.csv')`
-2. Apply feature engineering as shown in the notebook
-3. Load the model: `model = pickle.load(open('fraud_random_forest.pkl', 'rb'))`
-4. Make predictions with optimal threshold (≈0.82)
-
-## Video Script Outline (4 minutes)
-1. **Introduction (30s)**: Explain credit card fraud problem and dataset overview
-2. **Model Explanation (1min)**: Describe Random Forest algorithm and why it's suitable
-3. **Data Preprocessing (45s)**: Cover feature engineering and handling imbalance
-4. **Model Training (45s)**: Discuss improvements and hyperparameter tuning
-5. **Results (45s)**: Present metrics, confusion matrix, and performance gains
-6. **Challenges (30s)**: Highlight problems faced and solutions implemented
-7. **Conclusion (15s)**: Summary and potential improvements
-
-## Next Steps
-- Increase hyperparameter search iterations for better tuning
-- Experiment with other algorithms (XGBoost, LightGBM)
-- Implement SHAP for model explainability
-- Deploy model as a real-time fraud detection service
-
-## Dependencies
+### Requirements
+- Python 3.x
 - pandas
 - numpy
 - scikit-learn
+- xgboost
 - imbalanced-learn
 - matplotlib
 - seaborn
-- tqdm
-- pickle
+- pandas
+- numpy
+- scikit-learn
+- xgboost
+- matplotlib
+- seaborn
+
+Install dependencies with:
+```bash
+pip install pandas numpy scikit-learn xgboost matplotlib seaborn
+```
+
+## References
+- [Kaggle Credit Card Fraud Detection Dataset](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+- [Scikit-learn Documentation](https://scikit-learn.org/)
+- [XGBoost Documentation](https://xgboost.readthedocs.io/)
